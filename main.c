@@ -1,4 +1,4 @@
-#include<stdio.h>
+#include <stdio.h>
 #include "raylib.h"
 
 const int screenWidth = 800;
@@ -53,7 +53,10 @@ void placeRandomTile(void) {
     // Fill the random tile
     for (int i = 0; i < 16; i++) {
         if (tiles[i] == 0) randomTile--;
-        if (randomTile == 0) tiles[i] = 2;
+        if (randomTile == 0) {
+            tiles[i] = 2;
+            break;
+        }
     }
 }
 
@@ -61,6 +64,89 @@ void resetGame(void) {
     for (int i = 0; i < 16; i++) {
         tiles[i] = 0;
     }
+}
+
+void handleInput(void) {
+    if (IsKeyPressed(KEY_LEFT)) {
+        for (int i = 0; i < 16; i++) {  
+            int currentMoveTilePos = i / 4 + (i % 4) * 4;
+            int movePosition = currentMoveTilePos;
+            bool multiplyTiles = false;
+            for (int j = currentMoveTilePos - 1; j > (currentMoveTilePos / 4) * 4 - 1; j--) {
+                if (tiles[j] == 0) {
+                    movePosition = j;
+                } else if (tiles[currentMoveTilePos] == tiles[j]) {
+                    movePosition = j;
+                    multiplyTiles = true;
+                    break;
+                } else {
+                    break;
+                }
+            }
+            if (multiplyTiles) {
+                tiles[movePosition] *= 2;
+            }
+            if (tiles[movePosition] == 0) {
+                tiles[movePosition] = tiles[currentMoveTilePos];
+            }
+            if (currentMoveTilePos != movePosition) {
+                tiles[currentMoveTilePos] = 0;
+            }
+        }
+        placeRandomTile();
+    }
+
+    if (IsKeyPressed(KEY_RIGHT)) {
+        for (int i = 0; i < 16; i++) {
+            int movePosition = i;
+            for (int j = i; j < (i / 4) * 4 + 4; j++) {
+                if (tiles[j] == 0) {
+                    movePosition = j;
+                }
+            }
+            tiles[movePosition] = tiles[i];
+            if (i != movePosition) {
+                tiles[i] = 0;
+            }
+        }
+        placeRandomTile();
+    }
+
+    if (IsKeyPressed(KEY_UP)) {
+        for (int i = 0; i < 16; i++) {
+            int movePosition = i;
+            for (int j = i; j > -1; j -= 4) {
+                if (tiles[j] == 0) {
+                    movePosition = j;
+                }
+            }
+            tiles[movePosition] = tiles[i];
+            if (i != movePosition) {
+                tiles[i] = 0;
+            }
+        }
+        placeRandomTile();
+    }
+
+    if (IsKeyPressed(KEY_DOWN)) {
+        for (int i = 0; i < 16; i++) {
+            int movePosition = i;
+            for (int j = i; j < 16; j += 4) {
+                if (tiles[j] == 0) {
+                    movePosition = j;
+                }
+            }
+            tiles[movePosition] = tiles[i];
+            if (i != movePosition) {
+                tiles[i] = 0;
+            }
+        }
+        placeRandomTile();
+    }
+
+    if (IsKeyPressed(KEY_SPACE)) {
+        resetGame();
+    };
 }
 
 int main(void) {
@@ -74,21 +160,7 @@ int main(void) {
     // Game loop
     while (!WindowShouldClose()) {
         //Code
-        if (IsKeyPressed(KEY_LEFT)) {
-            for (int i = 0; i < 16; i++) {
-                int movePosition = i;
-                for (int j = i; j > (i / 4) * 4 - 1; j--) {
-                    if (tiles[j] == 0) {
-                        movePosition = j;
-                    }
-                }
-                tiles[movePosition] = tiles[i];
-                if (i != movePosition) {
-                    tiles[i] = 0;
-                }
-            }
-            placeRandomTile();
-        }
+        handleInput();
 
         // Draw
         BeginDrawing();
