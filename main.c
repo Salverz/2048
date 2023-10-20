@@ -1,10 +1,13 @@
 #include <stdio.h>
+#include <stdbool.h>
 #include "raylib.h"
 
 const int screenWidth = 800;
 const int screenHeight = 1000;
 int tiles[16];
 int lastTilesState[16];
+int moveAmount[16];
+bool moved = false;
 
 void drawBackground(void) {
     DrawRectangle(0, 0, screenWidth, screenHeight, BEIGE);
@@ -83,32 +86,59 @@ Color getColorForTile(int tileValue) {
     return tileColor;
 }
 
-void drawTiles(void) {
+void drawTile(int number, int matrixPos, int xOffset, int yOffset) {
+    // Convert number to string
+    char strNumber[5];
+    sprintf(strNumber, "%d", number);
+
+    // Determine text offset based on text length
+    int textOffset;
+    for (int i = 0; i < 5; i++) {
+        if (strNumber[i] == '\0') {
+            break;
+        }
+        textOffset = (i + 1) * -13 + 100;
+    }
+
+    DrawRectangle((matrixPos % 4) * 200 + 10 + xOffset, (matrixPos / 4) * 200 + 210 + yOffset, 180, 180, getColorForTile(number));
+    DrawText(strNumber, (matrixPos % 4) * 200 + textOffset + xOffset, (matrixPos / 4) * 200 + 280 + yOffset, 50, DARKGRAY);
+}
+
+void drawBoard(void) {
     for (int i = 0; i < 16; i++) {
         if (tiles[i] != 0) {
-            // Convert number to string
-            char number[5];
-            sprintf(number, "%d", tiles[i]);
-
-            // Determine text offset based on text length
-            int offset;
-            for (int i = 0; i < 5; i++) {
-                if (number[i] == '\0') {
-                    break;
-                }
-                offset = (i + 1) * -13 + 100;
-            }
-
-            DrawRectangle((i % 4) * 200 + 10, (i / 4) * 200 + 210, 180, 180, getColorForTile(tiles[i]));
-            DrawText(number, (i % 4) * 200 + offset, (i / 4) * 200 + 280, 50, DARKGRAY);
+            drawTile(tiles[i], i, 0, 0);
         }
     }
+}
+
+
+            ////////////////////////////////////
+            // Needs to go inside drawBoard() //
+            ////////////////////////////////////
+void drawAnimation(void) {
+    double endTime = GetTime() + .5;
+    while (GetTime() < endTime) {
+        // drawTile(4, 6, 200, 0);
+        DrawRectangle(100, 100, 100, 100, RED);
+    }
+    // int speed = 5;
+    // for (int movedAmount = 0; movedAmount < 500; movedAmount += speed) {
+    //     for (int i = 0; i < 16; i++) {
+    //         // if (moveAmount[i] == 0 || lastTilesState[i] == 0) {
+    //         //     continue;
+    //         // }
+    //         drawTile(lastTilesState[i], i, movedAmount, 0);
+    //     }
+    //     WaitTime(.005);
+    // }
+    
 }
 
 void placeRandomTile(void) {
     // Find empty tiles
     int zeroTiles = 0;
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < 16; i++) { 
         if (tiles[i] == 0) zeroTiles++;
     }
 
@@ -135,6 +165,7 @@ void resetGame(void) {
 void updateLastTilesState(void) {
     for (int i = 0; i < 16; i++) {
         lastTilesState[i] = tiles[i];
+        moveAmount[i] = 0;
     }
 }
 
@@ -150,7 +181,7 @@ bool sameAsLastState(void) {
 void handleInput(void) {
     if (IsKeyPressed(KEY_LEFT)) {
         updateLastTilesState();
-        for (int i = 0; i < 16; i++) {  
+        for (int i = 0; i < 16; i++) {
             int currentMoveTilePos = i / 4 + (i % 4) * 4;
             int movePosition = currentMoveTilePos;
             bool multiplyTiles = false;
@@ -174,15 +205,18 @@ void handleInput(void) {
             if (currentMoveTilePos != movePosition) {
                 tiles[currentMoveTilePos] = 0;
             }
+            moveAmount[currentMoveTilePos] = movePosition - currentMoveTilePos;
         }
+        drawAnimation();
         if (!sameAsLastState()) {
+            moved = true;
             placeRandomTile();
         }
     }
 
     if (IsKeyPressed(KEY_RIGHT)) {
         updateLastTilesState();
-        for (int i = 15; i >= 0; i--) {  
+        for (int i = 15; i >= 0; i--) {
             int currentMoveTilePos = i / 4 + (i % 4) * 4;
             int movePosition = currentMoveTilePos;
             bool multiplyTiles = false;
@@ -206,8 +240,11 @@ void handleInput(void) {
             if (currentMoveTilePos != movePosition) {
                 tiles[currentMoveTilePos] = 0;
             }
+            moveAmount[currentMoveTilePos] = movePosition - currentMoveTilePos;
         }
+        drawAnimation();
         if (!sameAsLastState()) {
+            moved = true;
             placeRandomTile();
         }
     }
@@ -237,8 +274,11 @@ void handleInput(void) {
             if (i != movePosition) {
                 tiles[i] = 0;
             }
+            moveAmount[i] = movePosition - i;
         }
+        drawAnimation();
         if (!sameAsLastState()) {
+            moved = true;
             placeRandomTile();
         }
     }
@@ -268,8 +308,11 @@ void handleInput(void) {
             if (i != movePosition) {
                 tiles[i] = 0;
             }
+            moveAmount[i] = movePosition - i;
         }
+        drawAnimation();
         if (!sameAsLastState()) {
+            moved = true;
             placeRandomTile();
         }
     }
@@ -294,7 +337,7 @@ int main(void) {
         // Draw
         BeginDrawing();
         drawBackground();
-        drawTiles();
+        drawBoard();
         EndDrawing();
     }
 
